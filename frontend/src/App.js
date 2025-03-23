@@ -16,8 +16,8 @@ function App() {
       body: JSON.stringify({ input: history }),
     });
 
-    // const data = await response.json();
-    // console.log("Response from backend:", data);
+    const data = await response.json();
+    console.log("Response from backend:", data);
     // setResult(data.result);
   };
 
