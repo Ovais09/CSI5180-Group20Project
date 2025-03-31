@@ -4,13 +4,27 @@ import spacy
 import requests
 import json
 from datetime import datetime, timedelta
+from transformers import pipeline
+
 
 
 nlp = spacy.load("en_core_web_sm")
+
 app = Flask(__name__)
 CORS(app)
 
 print("Hello from the backend!")
+
+classifier = pipeline("zero-shot-classification", model="facebook/bart-large-mnli")
+
+
+# Example categories (your intents)
+candidate_labels = ["music", "sports", "general_irrelevant", "chit-chat", "spam", "off-topic"]
+
+def detect_intent(user_input):
+    result = classifier(user_input, candidate_labels)
+    intent = result["labels"][0]  # Get the highest scoring label
+    return intent
 
 
 @app.route('/process', methods=['POST'])
@@ -19,15 +33,26 @@ def process_input():
     chat_history = request.json.get('input', [])
     user_input = chat_history[-1]['text'] if chat_history else ''  # Get the latest user message
     print(f"User input: {user_input}")
+    detected_intent = detect_intent(user_input)
+    print(f"Query: {user_input}\nIntent: {detected_intent}\n")
+
 
     # Basic intent detection (e.g., event search, filter queries)
-    if "concert" in user_input.lower():
-        intent = "search_concerts"
-    elif "workshop" in user_input.lower():
-        intent = "search_workshops"
-    else:
-        intent = "unknown"
+    # if "concert" in user_input.lower():
+    #     intent = "search_concerts"
+    # elif "workshop" in user_input.lower():
+    #     intent = "search_workshops"
+    # else:
+    #     intent = "unknown"
+    intent = detected_intent
     print(f"Detected intent: {intent}")
+    
+    if intent == "spam":
+        return jsonify({'result': "That doesn't seem like a valid query. I'm here to help with events—let me know if you're looking for concerts, sports, or workshops!"})
+    elif intent == "off-topic":
+        return jsonify({'result': "It seems your query isn't related to events. Try asking about concerts, sports, or workshops—I’d be happy to help!"})
+    elif intent == "chit-chat":
+        return jsonify({'result': "Hi there! I'm here to help you find amazing events. Let me know if you're looking for concerts, sports, or workshops!"})
 
     # Extract entities
     entities = extract_entities(user_input)
@@ -89,7 +114,7 @@ def fetch_events(intent, entities):
     
     print(params)
     params.pop("keyword", None)
-    params["classificationName"] = "music"
+    params["classificationName"] = intent
     print(params)
 
     # Make the API request
