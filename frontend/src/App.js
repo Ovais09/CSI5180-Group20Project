@@ -7,18 +7,48 @@ import ChatForm from "./components/ChatForm";
 import ChatMessage from "./components/ChatMessage";
 function App() {
   const [chatHistory, setChatHistory] = useState([]);
+  const [result, setResult] = useState("");
 
   const generateEventSphereResponse = async (history) => {
-    console.log(history);
+    // function to update chat history with the bot response
+    const updatedHistory = (text) => {
+      setChatHistory((prev) => [
+        ...prev.filter((msg) => msg.text !== "Thinking..."),
+        { type: "model", text },
+      ]);
+    };
+
+    //call the backend API
     const response = await fetch("http://127.0.0.1:5000/process", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ input: history }),
     });
 
+    //await the response
     const data = await response.json();
     console.log("Response from backend:", data);
-    // setResult(data.result);
+    setResult(data.result);
+
+    //map the response and update the chat history
+    const responseText =
+      `Here are some cool events you might like: \n\n` +
+      data.result
+        .map(
+          (event) =>
+            `🎤${event.name} is happening on ${event.date} at ${event.location}\n🔗` +
+            ` <a
+              href="${event.url}"
+              className="ticket-button"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              [Get Tickets Here] 
+            </a> `
+        )
+        .join("\n\n");
+
+    updatedHistory(responseText);
   };
 
   return (

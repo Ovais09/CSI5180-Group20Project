@@ -7,7 +7,6 @@ const ChatForm = ({
   generateEventSphereResponse,
 }) => {
   const [userInput, setUserInput] = useState("");
-  const [result, setResult] = useState("");
   const inputRef = useRef();
 
   const handleSubmit = async (e) => {
@@ -45,7 +44,7 @@ const ChatForm = ({
         onChange={(e) => setUserInput(e.target.value)}
         placeholder="Message..."
       />
-      <button class="material-symbols-rounded" type="submit">
+      <button className="material-symbols-rounded" type="submit">
         send
       </button>
       {/* <p>Result: {result}</p> */}
